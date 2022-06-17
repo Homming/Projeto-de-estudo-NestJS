@@ -1,6 +1,8 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Res } from '@nestjs/common';
 import * as fs from 'node:fs/promises';
 import { CoursesService } from './courses.service';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @Controller('courses')
 export class CoursesController {
@@ -25,16 +27,16 @@ export class CoursesController {
 
     @Post()
     @HttpCode(HttpStatus.NO_CONTENT)
-    async create(@Body() body: Object) {
+    async create(@Body() createCourseDto: CreateCourseDto) {
         
-        this.coursesService.create(body);
+        this.coursesService.create(createCourseDto);
 
-        return body;
+        return createCourseDto;
     }
 
     @Patch(':id')
-    async update(@Param('id') id: string, @Body() body: object, @Res() res) {
-        this.coursesService.update(id, body);
+    async update(@Param('id') id: string, @Body() updateCourseDto: UpdateCourseDto, @Res() res) {
+        this.coursesService.update(id, updateCourseDto);
 
         return res.status(HttpStatus.NO_CONTENT).send();
 
