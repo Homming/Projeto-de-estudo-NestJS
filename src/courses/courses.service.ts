@@ -28,29 +28,34 @@ export class CoursesService {
     }
 
     create(courseDto: any) {
+        /*
         const entries = Object.keys(this.courses[0]);
         for(let i = 0; i < entries.length; i += 1) {
             if (!Object.prototype.hasOwnProperty.call(courseDto, entries[i])) {
                 throw new HttpException("Falta de Dados na criação do objeto", HttpStatus.BAD_REQUEST);
             }
         }
+            Não é mais necessário, pois estamos fazendo a validação dos dados com o class-validator no DTO
+        */
+        courseDto['id'] = this.courses.length + 1;
 
         this.courses.push(courseDto);
         fs.writeFile('./cursos.json', JSON.stringify(this.courses));
 
-        return this.courses;
+        return courseDto;
     }
 
-    async update(id: string, courseDto: any) {
+    update(id: string, courseDto: any) {
         const keys = Object.keys(courseDto);
 
         const itemToUpdate = this.courses.find(item => item.id === Number(id))
-        //if (!itemToUpdate) throw new CustomException(HttpStatus.NOT_FOUND, "Curso não encontrado");
+        
+        if (!itemToUpdate) throw new HttpException("Course not found", HttpStatus.NOT_FOUND);
 
         keys.forEach(key => itemToUpdate[key] = courseDto[key]);
         this.courses.splice((Number(id)-1), 1, itemToUpdate);
 
-        await fs.writeFile('./cursos.json', JSON.stringify(this.courses));
+        fs.writeFile('./cursos.json', JSON.stringify(this.courses));
 
         return null;
     }

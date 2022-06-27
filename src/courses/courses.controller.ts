@@ -26,7 +26,7 @@ export class CoursesController {
     }
 
     @Post()
-    @HttpCode(HttpStatus.NO_CONTENT)
+    @HttpCode(HttpStatus.OK)
     async create(@Body() createCourseDto: CreateCourseDto) {
         
         this.coursesService.create(createCourseDto);
