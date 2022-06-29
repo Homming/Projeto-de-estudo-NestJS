@@ -1,24 +1,26 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Course } from './entities/course.entity';
-import * as fs from 'node:fs/promises';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @Injectable()
 export class CoursesService {
-    private courses: Course[];
 
-    constructor() {
-        fs.readFile('./cursos.json', "utf8")
-            .then(data => { 
-                this.courses = JSON.parse(data) 
-            });
-    }
+    constructor(
+        @InjectRepository(Course)
+        private readonly courseRepository: Repository<Course>,
+    ) {}
 
     async findAll() {
-        return this.courses;
+        const courses = this.courseRepository.find();
+        
+        return courses;
     }
 
     findOne(id: string) {
-        const course = this.courses.find(item => item.id === Number(id));
+        const course = this.courseRepository.findOne(id);
 
         if(!course) {
             throw new HttpException(`Course ID ${id} not found`, HttpStatus.NOT_FOUND)
@@ -27,46 +29,35 @@ export class CoursesService {
         return course;
     }
 
-    create(courseDto: any) {
-        /*
-        const entries = Object.keys(this.courses[0]);
-        for(let i = 0; i < entries.length; i += 1) {
-            if (!Object.prototype.hasOwnProperty.call(courseDto, entries[i])) {
-                throw new HttpException("Falta de Dados na criação do objeto", HttpStatus.BAD_REQUEST);
-            }
-        }
-            Não é mais necessário, pois estamos fazendo a validação dos dados com o class-validator no DTO
-        */
-        courseDto['id'] = this.courses.length + 1;
-
-        this.courses.push(courseDto);
-        fs.writeFile('./cursos.json', JSON.stringify(this.courses));
-
-        return courseDto;
+    create(courseDto: CreateCourseDto) {
+        //crio o objeto de acordo com oque foi recebido
+        const course = this.courseRepository.create(courseDto);
+        // salvo o mesmo no banco de dados;
+        return this.courseRepository.save(course);
     }
 
-    update(id: string, courseDto: any) {
-        const keys = Object.keys(courseDto);
-
-        const itemToUpdate = this.courses.find(item => item.id === Number(id))
+    async update(id: string, courseDto: UpdateCourseDto) {
+        // pré carrega o objeto que iremos atualizar ao encontrar o registro 
+        // com o id especificando dentro do objeto do preload
+        const course = await this.courseRepository.preload({
+            id: +id,
+            ...courseDto,
+        });
         
-        if (!itemToUpdate) throw new HttpException("Course not found", HttpStatus.NOT_FOUND);
+        if (!course) {
+            throw new HttpException(`Course ID ${id} not found`, HttpStatus.NOT_FOUND);
+        }
 
-        keys.forEach(key => itemToUpdate[key] = courseDto[key]);
-        this.courses.splice((Number(id)-1), 1, itemToUpdate);
-
-        fs.writeFile('./cursos.json', JSON.stringify(this.courses));
-
-        return null;
+        return this.courseRepository.save(course);
     }
 
     async remove(id: string) {
-        //if(Number(id) > this.courses.length || Number(id) <= 0) throw new CustomException(HttpStatus.NOT_FOUND, "id inválido");
+        const course = await this.courseRepository.findOne(id);
 
-        const courseFilter = this.courses.filter(element => element.id != Number(id));
+        if (!course) {
+            throw new HttpException(`Course ID ${id} not found`, HttpStatus.NOT_FOUND);
+        }
 
-        await fs.writeFile('./cursos.json', JSON.stringify(courseFilter));
-
-        return this.courses;
+        return this.courseRepository.remove(course);
     }
 }
