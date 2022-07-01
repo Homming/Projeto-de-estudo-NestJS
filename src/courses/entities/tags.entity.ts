@@ -9,6 +9,6 @@ export class Tags {
     @Column()
     name: string
 
-    @ManyToMany(type => Course, course => course.tags)
+    @ManyToMany(() => Course, course => course.tags)
     courses: Course[];
 }

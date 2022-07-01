@@ -12,7 +12,7 @@ export class Course {
     @Column()
     description: string;
 
-    @ManyToMany(type => Tags, tags => tags.courses, {
+    @ManyToMany(() => Tags, tags => tags.courses, {
         cascade: true
     })
     @JoinTable()
