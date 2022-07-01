@@ -19,7 +19,7 @@ export class CoursesController {
 
     @Get(':id')
     async findById(@Param('id') id) {
-        const element = this.coursesService.findOne(id);
+        const element = this.coursesService.findOne(+id);
         if (!element) return "Curso não encontrado";
 
         return element;
@@ -44,7 +44,7 @@ export class CoursesController {
 
     @Delete(':id')
     async remove(@Param('id') id, @Res() res) {
-        const courses = this.coursesService.remove(id);
+        const courses = this.coursesService.remove(+id);
 
         res.status(HttpStatus.OK).send(courses);
     }
