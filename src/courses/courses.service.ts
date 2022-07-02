@@ -32,19 +32,30 @@ export class CoursesService {
         return course;
     }
 
-    create(courseDto: CreateCourseDto) {
-        //crio o objeto de acordo com oque foi recebido
-        const course = this.courseRepository.create(courseDto);
-        // salvo o mesmo no banco de dados;
+    async create(courseDto: CreateCourseDto) {
+        
+        const tags = await Promise.all(
+            courseDto.tags.map((name) => this.preloadTagByName(name))
+        )
+
+        const course = this.courseRepository.create({
+            ...courseDto,
+            tags,
+        });
+
         return this.courseRepository.save(course);
     }
 
     async update(id: string, courseDto: UpdateCourseDto) {
-        // pré carrega o objeto que iremos atualizar ao encontrar o registro 
-        // com o id especificando dentro do objeto do preload
+        
+        const tags = courseDto.tags && (await Promise.all(
+            courseDto.tags.map((name) => this.preloadTagByName(name))
+        ));
+
         const course = await this.courseRepository.preload({
             id: +id,
             ...courseDto,
+            tags,
         });
         
         if (!course) {
@@ -62,5 +73,13 @@ export class CoursesService {
         }
 
         return this.courseRepository.remove(course);
+    }
+
+    private async preloadTagByName(name: string): Promise<Tags> {
+        const tag = await this.tagRepository.findOne({ where: { name } });
+
+        if (tag) return tag;
+
+        return this.tagRepository.create({ name });
     }
 }
