@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Course } from './entities/course.entity';
+import { Tags } from './entities/tags.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -11,6 +12,9 @@ export class CoursesService {
     constructor(
         @InjectRepository(Course)
         private readonly courseRepository: Repository<Course>,
+
+        @InjectRepository(Tags)
+        private readonly tagsRepository: Repository<Tags>,
     ) {}
 
     async findAll() {
@@ -29,14 +33,31 @@ export class CoursesService {
         return course;
     }
 
-    create(courseDto: CreateCourseDto) {
-        //crio o objeto de acordo com oque foi recebido
-        const course = this.courseRepository.create(courseDto);
+    async create(courseDto: CreateCourseDto) {
+        // uso de Promise.all() só irá retornar os valores 
+        // após todas as promisses tiverem sido resolvidas.
+        // fazemos uma HOF para percorrer o array de tags, e utilizamos o método
+        // preloadTagByName para verificar se cada tag do array já foi criada ou não.
+        const tags = await Promise.all(
+            courseDto.tags.map( ({ name }) => this.preloadTagByName(name))
+        );
+
+        // crio o objeto de acordo com oque foi recebido,
+        // faz o spread operator do objeto recebido e adiciona o array tags, já preloadado anteriormente, sobrescrevendo as tags do objeto courseDto
+        const course = this.courseRepository.create({
+            ...courseDto,
+            tags,
+        });
         // salvo o mesmo no banco de dados;
         return this.courseRepository.save(course);
     }
 
     async update(id: string, courseDto: UpdateCourseDto) {
+        const tags = course.tags && (
+            await Promise.all(
+                courseDto.tags.map(({ name }) => this.preloadTagByName(name)
+            )
+        )       
         // pré carrega o objeto que iremos atualizar ao encontrar o registro 
         // com o id especificando dentro do objeto do preload
         const course = await this.courseRepository.preload({
@@ -59,5 +80,16 @@ export class CoursesService {
         }
 
         return this.courseRepository.remove(course);
+    }
+
+    // oque ele encontrar, ele retornar, oque ele não encontrar, ele cria e retorna
+    private async preloadTagByName(name: string): Promise<Tags> {
+        const tag = await this.tagsRepository.findOne({ name });
+
+        if (tag) {
+            return tag;
+        }
+
+        return this.tagsRepository.create({ name });
     }
 }
