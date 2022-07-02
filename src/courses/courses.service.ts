@@ -53,16 +53,19 @@ export class CoursesService {
     }
 
     async update(id: string, courseDto: UpdateCourseDto) {
-        const tags = course.tags && (
+        // faz o mesmo do create, verifica primeiramento se há um campo Tags no objeto, e depois faz o preload de cada uma das tags, verificando se a mesma já foi criada na base ou não.
+        const tags = courseDto.tags && (
             await Promise.all(
-                courseDto.tags.map(({ name }) => this.preloadTagByName(name)
+                courseDto.tags.map(({ name }) => this.preloadTagByName(name))
             )
         )       
         // pré carrega o objeto que iremos atualizar ao encontrar o registro 
         // com o id especificando dentro do objeto do preload
+        // sobrescreve o campo tags do objeto, de acordo com a constante que criamos anteriormente utilizanodo o preloadTagByName
         const course = await this.courseRepository.preload({
             id: +id,
             ...courseDto,
+            tags
         });
         
         if (!course) {
