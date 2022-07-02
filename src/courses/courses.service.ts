@@ -39,7 +39,7 @@ export class CoursesService {
         // fazemos uma HOF para percorrer o array de tags, e utilizamos o método
         // preloadTagByName para verificar se cada tag do array já foi criada ou não.
         const tags = await Promise.all(
-            courseDto.tags.map( ({ name }) => this.preloadTagByName(name))
+            courseDto.tags.map((name) => this.preloadTagByName(name))
         );
 
         // crio o objeto de acordo com oque foi recebido,
@@ -56,7 +56,7 @@ export class CoursesService {
         // faz o mesmo do create, verifica primeiramento se há um campo Tags no objeto, e depois faz o preload de cada uma das tags, verificando se a mesma já foi criada na base ou não.
         const tags = courseDto.tags && (
             await Promise.all(
-                courseDto.tags.map(({ name }) => this.preloadTagByName(name))
+                courseDto.tags.map((name) => this.preloadTagByName(name))
             )
         )       
         // pré carrega o objeto que iremos atualizar ao encontrar o registro 
