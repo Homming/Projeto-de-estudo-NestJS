@@ -14,7 +14,7 @@ import { CoursesModule } from './courses/courses.module';
     password: process.env.database_password,
     database: 'nestjs',
     autoLoadEntities: true,
-    synchronize: true,
+    synchronize: false,
   })],
   controllers: [AppController],
   providers: [AppService],
